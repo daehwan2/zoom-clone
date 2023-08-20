@@ -1,4 +1,6 @@
+import http from "http"; // node.js 에 내장된 라이브러리
 import express from "express";
+import WebSocket from "ws";
 
 const app = express();
 
@@ -11,4 +13,13 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 console.log("hello");
 
-app.listen(3000);
+const handleListen = () => console.log("Litening on http://localhost:3000");
+
+/**
+ * http , ws 동일 포트에 열고 싶을때 이렇게 할 수 있다.
+ * http 서버 위에 ws 서버를 올리는 것이다.
+ */
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+server.listen(3000, handleListen);
