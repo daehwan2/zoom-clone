@@ -21,19 +21,41 @@ console.log("hello");
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+function publicRoom() {
+  const { sids, rooms } = wsServer.sockets.adapter;
+
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+
+  return publicRooms;
+}
+
 wsServer.on("connection", (socket) => {
   socket.nickname = "익명";
+  socket.onAny((event) => {
+    console.log(wsServer.sockets.adapter);
+  });
   socket.on("enter_room", (roomName, showRoom) => {
     socket.join(roomName);
     showRoom();
     console.log(roomName);
     socket.to(roomName).emit("welcome", socket.nickname);
+    wsServer.sockets.emit("room_change", publicRoom());
   });
 
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) =>
       socket.to(room).emit("bye", socket.nickname)
     );
+    wsServer.sockets.emit("room_change", publicRoom());
+  });
+
+  socket.on("disconnect", () => {
+    wsServer.sockets.emit("room_change", publicRoom());
   });
 
   socket.on("new_message", (message, roomName, done) => {
