@@ -1,6 +1,8 @@
 import http from "http"; // node.js 에 내장된 라이브러리
 import express from "express";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
+
 // import WebSocket from "ws";
 
 const app = express();
@@ -19,7 +21,17 @@ console.log("hello");
  * http 서버 위에 ws 서버를 올리는 것이다.
  */
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
+
+instrument(wsServer, {
+  auth: false,
+  mode: "development",
+});
 
 function publicRoom() {
   const { sids, rooms } = wsServer.sockets.adapter;
